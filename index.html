@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Хоррор-квест: Прогресс-07</title>
+    <style>
+        :root {
+            --blood-red: #c00;
+            --dark-red: rgba(85, 0, 0, 0.5);
+            --light-red: #f00;
+            --dark-bg: #111;
+            --darker-bg: #080808;
+            --text-color: #e0e0e0;
+            --highlight-color: #fff;
+            --menu-overlay: rgba(0, 0, 0, 0.233);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Главное меню */
+        #main-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0000002d;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            background-image: url('images/люк на главную стр.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: all 0.5s ease;
+        }
+        
+        #main-menu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(80, 0, 0, 0.048), rgba(0, 0, 0, 0.164));
+            z-index: -1;
+        }
+        
+        #main-menu h1 {
+            color: var(--blood-red);
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px var(--light-red), 0 0 20px rgba(255, 0, 0, 0.5);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            animation: pulse 2s infinite, flicker 3s infinite;
+            text-align: center;
+            padding: 0 20px;
+            position: relative;
+        }
+        
+        @keyframes pulse {
+            0% { text-shadow: 0 0 10px var(--light-red); }
+            50% { text-shadow: 0 0 20px var(--light-red), 0 0 30px #800; }
+            100% { text-shadow: 0 0 10px var(--light-red); }
+        }
+        
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                opacity: 1;
+            }
+            20%, 22%, 24%, 55% {
+                opacity: 0.7;
+            }
+        }
+        
+        .menu-btn {
+            padding: 15px 30px;
+            margin: 10px;
+            background-color: rgba(34, 34, 34, 0.8);
+            color: var(--text-color);
+            border: 1px solid var(--dark-red);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            width: 280px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            border-radius: 3px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.3), transparent);
+            transition: all 0.7s;
+            z-index: -1;
+        }
+        
+        .menu-btn:hover {
+            background-color: rgba(80, 0, 0, 0.7);
+            color: var(--highlight-color);
+            border-color: var(--light-red);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(200, 0, 0, 0.4);
+        }
+        
+        .menu-btn:hover::before {
+            left: 100%;
+        }
+        
+        /* Игровой интерфейс */
+        #header {
+            background-color: var(--darker-bg);
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid var(--dark-red);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.7);
+            z-index: 10;
+            position: relative;
+        }
+        
+        #header h1 {
+            color: var(--blood-red);
+            margin: 0;
+            font-size: 1.5rem;
+            text-shadow: 0 0 5px var(--light-red);
+            letter-spacing: 2px;
+            animation: flicker 5s infinite;
+        }
+        
+        #game-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background-color: #000;
+        }
+        
+        #media-container {
+            flex: 3;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            border-right: 1px solid #300;
+        }
+        
+        #media-content {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: opacity 0.5s ease;
+        }
+        
+        #media-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%);
+            pointer-events: none;
+        }
+        
+        /* Панель ввода кода */
+        .code-input-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(20, 20, 20, 0.9);
+            padding: 20px;
+            border: 1px solid var(--dark-red);
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+        
+        .code-input-title {
+            color: var(--blood-red);
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .code-input {
+            background-color: rgba(30, 30, 30, 0.8);
+            border: 1px solid var(--dark-red);
+            color: var(--text-color);
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        
+        .code-submit-btn {
+            background-color: var(--dark-red);
+            color: var(--text-color);
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+        }
+        
+        .code-submit-btn:hover {
+            background-color: var(--blood-red);
+        }
+        
+        /* Панель с документами */
+        .document-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(20, 20, 20, 0.9);
+            padding: 20px;
+            border: 1px solid var(--dark-red);
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+        
+        .document-title {
+            color: var(--blood-red);
+            font-size: 1.3rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .document-content {
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        
+        .close-btn {
+            background-color: var(--dark-red);
+            color: var(--text-color);
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+        
+        .close-btn:hover {
+            background-color: var(--blood-red);
+        }
+        
+        #text-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            max-width: 500px;
+            background-color: var(--darker-bg);
+            border-left: 1px solid #300;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #text-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dark-red) #222;
+        }
+        
+        #text-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #text-content::-webkit-scrollbar-track {
+            background: #222;
+        }
+        
+        #text-content::-webkit-scrollbar-thumb {
+            background-color: var(--dark-red);
+            border-radius: 4px;
+        }
+        
+        #location-title {
+            color: var(--blood-red);
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(200, 0, 0, 0.5);
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+            position: relative;
+        }
+        
+        #location-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 50%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--blood-red), transparent);
+        }
+        
+        #location-description {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+        
+        #actions {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            background-color: rgba(34, 34, 34, 0.8);
+            color: var(--text-color);
+            border: 1px solid var(--dark-red);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 0, 0, 0.1), transparent);
+            transition: all 0.5s;
+        }
+        
+        .action-btn:hover {
+            background-color: rgba(80, 0, 0, 0.6);
+            color: var(--highlight-color);
+            border-color: var(--light-red);
+            transform: translateX(5px);
+            box-shadow: 0 0 10px rgba(200, 0, 0, 0.3);
+        }
+        
+        .action-btn:hover::before {
+            left: 100%;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Инвентарь */
+        #inventory-container {
+            padding: 15px;
+            background-color: rgba(17, 17, 17, 0.9);
+            border-top: 1px solid #333;
+            backdrop-filter: blur(5px);
+        }
+        
+        #inventory-title {
+            color: var(--blood-red);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            text-shadow: 0 0 5px rgba(200, 0, 0, 0.3);
+        }
+        
+        #inventory-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .inventory-item {
+            background-color: rgba(51, 51, 51, 0.8);
+            padding: 6px 12px;
+            border: 1px solid #555;
+            font-size: 0.85rem;
+            border-radius: 3px;
+            color: var(--text-color);
+            transition: all 0.3s;
+            backdrop-filter: blur(2px);
+        }
+        
+        .inventory-item:hover {
+            background-color: rgba(80, 0, 0, 0.6);
+            border-color: var(--light-red);
+            transform: translateY(-2px);
+        }
+        
+        /* Экраны концовки и видео */
+        #ending-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: #fff;
+            text-align: center;
+            padding: 30px;
+            box-sizing: border-box;
+            backdrop-filter: blur(2px);
+        }
+        
+        #ending-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.267);
+            z-index: -1;
+        }
+        
+        #ending-content {
+            max-width: 800px;
+            background-color: rgba(20, 20, 20, 0.377);
+            padding: 30px;
+            border-radius: 5px;
+            border: 1px solid var(--dark-red);
+            box-shadow: 0 0 20px rgba(200, 0, 0, 0.3);
+        }
+        
+        #ending-title {
+            color: var(--blood-red);
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px var(--light-red), 0 0 20px rgba(255, 0, 0, 0.219);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            animation: pulse 2s infinite;
+        }
+        
+        #ending-text {
+            max-width: 700px;
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
+            font-size: 1.1rem;
+            text-align: left;
+            padding: 20px;
+            background-color: rgba(20, 20, 20, 0.575);
+            border-left: 3px solid var(--dark-red);
+            border-radius: 3px;
+        }
+        
+        #restart-btn {
+            padding: 15px 40px;
+            background-color: var(--dark-red);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            border-radius: 3px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        #restart-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.5s;
+        }
+        
+        #restart-btn:hover {
+            background-color: #700;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(200, 0, 0, 0.7);
+        }
+        
+        #restart-btn:hover::before {
+            left: 100%;
+        }
+        
+        #video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            z-index: 200;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #hallucination-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #escape-btn {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 40px;
+            background-color: var(--blood-red);
+            color: #fff;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 210;
+            display: none;
+            animation: blink 1s infinite, pulse 1.5s infinite;
+            border-radius: 3px;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(200, 0, 0, 0.8);
+            transition: all 0.3s;
+        }
+        
+        #escape-btn:hover {
+            background-color: #f00;
+            transform: translateX(-50%) scale(1.05);
+            animation: none;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
+        }
+        
+        /* Настройки звука */
+        #settings-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(34, 34, 34, 0.8);
+            border: 1px solid var(--dark-red);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 400;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        #settings-btn:hover {
+            background-color: rgba(80, 0, 0, 0.6);
+            transform: rotate(90deg);
+        }
+        
+        #settings-panel {
+            position: fixed;
+            top: 70px;
+            right: 15px;
+            background-color: rgba(34, 34, 34, 0.9);
+            border: 1px solid var(--dark-red);
+            border-radius: 5px;
+            padding: 15px;
+            z-index: 400;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            width: 250px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .settings-label {
+            font-size: 0.9rem;
+        }
+        
+        .settings-slider {
+            width: 100px;
+        }
+        
+        /* Вспомогательные классы */
+        .blood-text {
+            color: var(--blood-red);
+            font-weight: bold;
+            text-shadow: 0 0 3px rgba(200, 0, 0, 0.5);
+        }
+        
+        .note {
+            background-color: rgba(34, 34, 34, 0.7);
+            padding: 12px;
+            border-left: 3px solid var(--dark-red);
+            margin: 15px 0;
+            font-style: italic;
+            line-height: 1.5;
+            border-radius: 0 3px 3px 0;
+            backdrop-filter: blur(2px);
+        }
+        
+        /* Анимации */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid var(--blood-red);
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: 3px;
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--blood-red); }
+        }
+        
+        /* Эффект старинного фильма */
+        .film-grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('images/люк на главную стр.jpg');
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        /* Контейнер для сообщений в правом нижнем углу */
+        #message-container {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            max-width: 400px;
+            width: 90%;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            background-color: rgba(20, 20, 20, 0.9);
+            border: 1px solid var(--dark-red);
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            animation: messageFadeIn 0.3s ease-out;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+        }
+        
+        .message-title {
+            color: var(--blood-red);
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .message-text {
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        
+        .message-btn {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            background-color: rgba(80, 0, 0, 0.6);
+            color: var(--text-color);
+            border: 1px solid var(--dark-red);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border-radius: 3px;
+        }
+        
+        .message-btn:hover {
+            background-color: rgba(120, 0, 0, 0.8);
+            border-color: var(--light-red);
+        }
+        
+        @keyframes messageFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 1024px) {
+            #game-container {
+                flex-direction: column;
+            }
+            
+            #media-container {
+                flex: 2;
+                border-right: none;
+                border-bottom: 1px solid #300;
+            }
+            
+            #text-container {
+                flex: 1;
+                max-width: 100%;
+            }
+            
+            #media-content {
+                max-height: 60vh;
+            }
+            
+            #message-container {
+                max-width: 350px;
+                bottom: 80px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #main-menu h1 {
+                font-size: 2.5rem;
+                letter-spacing: 3px;
+            }
+            
+            .menu-btn {
+                width: 240px;
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+            
+            #ending-title {
+                font-size: 2rem;
+            }
+            
+            #ending-text {
+                font-size: 1rem;
+                padding: 0 20px;
+            }
+            
+            #header h1 {
+                font-size: 1.2rem;
+            }
+            
+            #message-container {
+                max-width: 300px;
+                bottom: 70px;
+                right: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #main-menu h1 {
+                font-size: 2rem;
+                letter-spacing: 2px;
+            }
+            
+            .menu-btn {
+                width: 220px;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            #location-title {
+                font-size: 1.3rem;
+            }
+            
+            #location-description, .action-btn {
+                font-size: 0.9rem;
+            }
+            
+            #settings-panel {
+                width: 90%;
+                left: 5%;
+                right: auto;
+            }
+            
+            #message-container {
+                max-width: 90%;
+                bottom: 60px;
+                right: 10px;
+            }
+            
+            .message {
+                padding: 12px;
+            }
+            
+            .message-title {
+                font-size: 1.1rem;
+            }
+            
+            .message-text {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="film-grain"></div>
+    
+    <!-- Кнопка настроек -->
+    <div id="settings-btn" onclick="toggleSettings()">⚙️</div>
+    
+    <!-- Панель настроек -->
+    <div id="settings-panel">
+        <div class="settings-row">
+            <span class="settings-label">Звук:</span>
+            <button class="action-btn" id="toggle-sound-btn" onclick="toggleSound()">Включить звук</button>
+        </div>
+        <div class="settings-row">
+            <span class="settings-label">Музыка:</span>
+            <input type="range" class="settings-slider" id="music-volume" min="0" max="1" step="0.1" value="0.5">
+        </div>
+        <div class="settings-row">
+            <span class="settings-label">Звуки:</span>
+            <input type="range" class="settings-slider" id="sfx-volume" min="0" max="1" step="0.1" value="0.7">
+        </div>
+        <div class="settings-row">
+            <span class="settings-label">Видео:</span>
+            <input type="range" class="settings-slider" id="video-volume" min="0" max="1" step="0.1" value="0.8">
+        </div>
+        <div class="settings-row">
+            <span class="settings-label">Амбиент:</span>
+            <input type="range" class="settings-slider" id="ambient-volume" min="0" max="1" step="0.1" value="0.6">
+        </div>
+        <div class="settings-row">
+            <button class="action-btn" onclick="toggleSettings()">Закрыть</button>
+        </div>
+    </div>
+    
+    <!-- Панель ввода кода -->
+    <div class="code-input-panel">
+        <div class="code-input-title">Введите код</div>
+        <input type="text" class="code-input" maxlength="4" placeholder="____">
+        <button class="code-submit-btn" onclick="submitCode()">Подтвердить</button>
+    </div>
+    
+    <!-- Панель с документами -->
+    <div class="document-panel">
+        <div class="document-title">Документы завода</div>
+        <div class="document-content">
+            <p><strong>Проект "Перерождение"</strong></p>
+            <p>Завод "Прогресс-07" занимается заменой людей на механические копии, сохраняя их сознание в системе. Процесс включает:</p>
+            <ul>
+                <li>Извлечение биологических компонентов</li>
+                <li>Имплантацию механических частей</li>
+                <li>Перенос сознания в центральную систему</li>
+            </ul>
+            <p>Испытуемый 07-85 (вы) был помечен как "Дефект" из-за несовместимости с системой. Однако ваши родители уже были успешно обработаны.</p>
+            <p>Код доступа к основным системам: 07-86</p>
+        </div>
+        <button class="close-btn" onclick="closeDocumentPanel()">Закрыть</button>
+    </div>
+    
+    <!-- Контейнер для сообщений -->
+    <div id="message-container"></div>
+    
+    <!-- Аудио элементы -->
+    <audio id="main-menu-music" loop></audio>
+    <audio id="ambient-music" loop></audio>
+    <audio id="button-click-sound"></audio>
+    <audio id="item-pickup-sound"></audio>
+    <audio id="door-open-sound"></audio>
+    <audio id="scary-sound"></audio>
+    <audio id="ending-music"></audio>
+    <audio id="bad-ending-music"></audio>
+    <audio id="good-ending-music"></audio>
+    
+    <!-- Аудио для локаций -->
+    <audio id="factory-outside-audio" loop></audio>
+    <audio id="gate-audio" loop></audio>
+    <audio id="conveyor-audio" loop></audio>
+    <audio id="conveyor-stopped-audio" loop></audio>
+    <audio id="storage-audio" loop></audio>
+    <audio id="archive-audio" loop></audio>
+    <audio id="archive-light-audio" loop></audio>
+    <audio id="basement-audio" loop></audio>
+    <audio id="control-room-audio" loop></audio>
+    <audio id="scp-arrival-audio" loop></audio>
+    
+    <div id="main-menu">
+        <h1 class="typewriter">Хоррор-квест: «Прогресс-07»</h1>
+        <button class="menu-btn" onclick="playButtonClick(); startGame()">Начать игру</button>
+        <button class="menu-btn" onclick="playButtonClick(); showEndings()">Просмотр концовок</button>
+        <button class="menu-btn" onclick="playButtonClick(); showAbout()">Об игре</button>
+    </div>
+    
+    <div id="header" class="hidden">
+        <h1>Хоррор-квест: «Прогресс-07»</h1>
+    </div>
+    
+    <div id="game-container" class="hidden">
+        <div id="media-container">
+            <img id="media-content" src="" alt="Локация" class="hidden">
+        </div>
+        
+        <div id="text-container">
+            <div id="text-content">
+                <h2 id="location-title">Завод "Прогресс-07"</h2>
+                <div id="location-description">
+                    Вы стоите перед заброшенным заводом, но понимаете, что вокруг — СССР, 1980-е. Массивные ворота с ржавой табличкой "Прогресс-07" скрипят на ветру. Вдалеке слышен гул машин, но вокруг ни души.
+                </div>
+                
+                <div id="actions">
+                    <button class="action-btn" onclick="playButtonClick(); approachFactory()">Подойти к проходной завода</button>
+                    <button class="action-btn" onclick="playButtonClick(); lookAround()">Осмотреться вокруг</button>
+                </div>
+            </div>
+            
+            <div id="inventory-container">
+                <h3 id="inventory-title">Инвентарь</h3>
+                <div id="inventory-items"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="ending-screen">
+        <div id="ending-content">
+            <h2 id="ending-title">КОНЕЦ</h2>
+            <div id="ending-text"></div>
+            <button id="restart-btn" onclick="playButtonClick(); restartGame()">Начать заново</button>
+        </div>
+    </div>
+    
+    <div id="video-container">
+        <video id="hallucination-video" width="800" height="600">
+            <source src="hallucination.mp4" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+        </video>
+    </div>
+    
+    <button id="escape-btn" onclick="playButtonClick(); escapeHallucination()">БЕГИ!</button>
+    
+    <script>
+        // Состояние игры
+        const gameState = {
+            currentLocation: 'factory_outside',
+            hasPass: false,
+            hasScrewdriver: false,
+            hasKey: false,
+            hasFlashlight: false,
+            hasBattery: false,
+            hasWrench: false,
+            hasCard: false,
+            hasDocuments: false,
+            lookedAtPass: false,
+            conveyorStopped: false,
+            endingsFound: [],
+            soundEnabled: false,
+            musicEnabled: false,
+            videoEnabled: false,
+            currentCodeInput: null,
+            isInEnding: false,
+            isInVideo: false
+        };
+        
+        // Аудио элементы
+        const audioElements = {
+            mainMenuMusic: document.getElementById('main-menu-music'),
+            ambientMusic: document.getElementById('ambient-music'),
+            buttonClick: document.getElementById('button-click-sound'),
+            itemPickup: document.getElementById('item-pickup-sound'),
+            doorOpen: document.getElementById('door-open-sound'),
+            scarySound: document.getElementById('scary-sound'),
+            endingMusic: document.getElementById('ending-music'),
+            badEndingMusic: document.getElementById('bad-ending-music'),
+            goodEndingMusic: document.getElementById('good-ending-music'),
+            
+            // Аудио для локаций
+            factory_outside: document.getElementById('factory-outside-audio'),
+            gate: document.getElementById('gate-audio'),
+            conveyor: document.getElementById('conveyor-audio'),
+            conveyor_stopped: document.getElementById('conveyor-stopped-audio'),
+            storage: document.getElementById('storage-audio'),
+            archive: document.getElementById('archive-audio'),
+            archive_light: document.getElementById('archive-light-audio'),
+            basement: document.getElementById('basement-audio'),
+            control_room: document.getElementById('control-room-audio'),
+            scp_arrival: document.getElementById('scp-arrival-audio')
+        };
+
+        // Кэш для аудио элементов
+        const audioCache = {};
+        
+        // Медиа-ресурсы (локальные файлы JPG)
+        const mediaResources = {
+            factory_outside: { 
+                image: 'images/factory_outside.jpg', 
+                audio: 'sounds/ambient_outside.mp3'
+            },
+            gate: { 
+                image: 'images/gate.jpg', 
+                audio: 'sounds/gate_creak.mp3'
+            },
+            pass: { 
+                image: 'images/pass.jpg', 
+                audio: 'sounds/paper_rustle.mp3'
+            },
+            pass_hallucination: { 
+                image: 'images/pass_hallucination.jpg', 
+                audio: 'sounds/whispers.mp3'
+            },
+            conveyor: { 
+                image: 'images/conveyor.jpg', 
+                audio: 'sounds/machinery_loop.mp3'
+            },
+            conveyor_stopped: { 
+                image: 'images/conveyor_stopped.jpg', 
+                audio: 'sounds/machinery_stop.mp3'
+            },
+            storage: { 
+                image: 'images/storage.jpg', 
+                audio: 'sounds/drip_water.mp3'
+            },
+            archive: { 
+                image: 'images/archive.jpg', 
+                audio: 'sounds/wind_howl.mp3'
+            },
+            archive_light: { 
+                image: 'images/archive_light.jpg', 
+                audio: 'sounds/light_switch.mp3'
+            },
+            basement: { 
+                image: 'images/basement.jpg', 
+                audio: 'sounds/heartbeat.mp3'
+            },
+            control_room: { 
+                image: 'images/control_room.jpg', 
+                audio: 'sounds/computer_beep.mp3'
+            },
+            scp_arrival: { 
+                image: 'images/scp_arrival.jpg', 
+                audio: 'sounds/radio_static.mp3'
+            }
+        };
+
+        // Звуковые эффекты
+        const soundEffects = {
+            buttonClick: 'sounds/ui_click.mp3',
+            itemPickup: 'sounds/item_pickup.mp3',
+            doorOpen: 'sounds/door_creak.mp3',
+            scary: 'sounds/jump_scare.mp3',
+            success: 'sounds/success_bell.mp3',
+            failure: 'sounds/failure_buzz.mp3'
+        };
+        
+        // Изображения для концовок
+        const endingImages = {
+            'Механическая линия': 'images/ending_mechanical.jpg',
+            'Обнуление': 'images/ending_reset.jpg',
+            'Освобождение': 'images/ending_liberation.jpg',
+            'Тёмный конец': 'images/ending_dark.jpg',
+            'Отключение': 'images/ending_shutdown.jpg',
+            'Секретная концовка': 'images/ending_secret.jpg',
+            'Просмотр концовок': 'images/endings_menu.jpg',
+            'Об игре': 'images/about_bg.jpg'
+        };
+
+        // Инициализация аудио кэша
+        function initAudioCache() {
+            // Предзагрузка основных звуков
+            preloadAudio(soundEffects.buttonClick);
+            preloadAudio(soundEffects.itemPickup);
+            preloadAudio(soundEffects.doorOpen);
+            preloadAudio(soundEffects.scary);
+            
+            // Предзагрузка музыки для локаций
+            for (const key in mediaResources) {
+                if (mediaResources[key].audio) {
+                    preloadAudio(mediaResources[key].audio);
+                }
+            }
+        }
+
+        // Предзагрузка аудио
+        function preloadAudio(url) {
+            if (!audioCache[url]) {
+                const audio = new Audio();
+                audio.src = url;
+                audio.load();
+                audioCache[url] = audio;
+            }
+        }
+
+        // Получение аудио из кэша или создание нового
+        function getAudio(url) {
+            if (!audioCache[url]) {
+                preloadAudio(url);
+            }
+            return audioCache[url];
+        }
+        
+        // Остановить все аудио локаций
+        function stopAllLocationAudio() {
+            for (const key in audioElements) {
+                if (key !== 'mainMenuMusic' && key !== 'endingMusic' && key !== 'badEndingMusic' && key !== 'goodEndingMusic') {
+                    audioElements[key].pause();
+                    audioElements[key].currentTime = 0;
+                }
+            }
+        }
+        
+        // Воспроизвести аудио для текущей локации
+        function playLocationAudio(location) {
+            if (!gameState.soundEnabled || gameState.isInEnding || gameState.isInVideo) return;
+            
+            stopAllLocationAudio();
+            
+            const audio = audioElements[location];
+            if (audio && mediaResources[location] && mediaResources[location].audio) {
+                audio.src = mediaResources[location].audio;
+                audio.volume = document.getElementById('ambient-volume').value;
+                audio.loop = true;
+                audio.play().catch(e => console.log('Автовоспроизведение заблокировано:', e));
+            }
+        }
+        
+        // Инициализация игры
+        function initGame() {
+            gameState.isInEnding = false;
+            gameState.isInVideo = false;
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('header').classList.remove('hidden');
+            document.getElementById('game-container').classList.remove('hidden');
+            document.getElementById('ending-screen').style.display = 'none';
+            document.getElementById('video-container').style.display = 'none';
+            document.getElementById('escape-btn').style.display = 'none';
+            
+            // Остановка музыки меню и запуск игровой музыки
+            stopMainMenuMusic();
+            playMainMenuMusic(); // Запускаем музыку меню как основной эмбиент
+            
+            updateLocation();
+            
+            // Инициализация аудио кэша
+            initAudioCache();
+        }
+        
+        // Воспроизведение звука кнопки
+        function playButtonClick() {
+            if (!gameState.soundEnabled) return;
+            
+            const audio = getAudio(soundEffects.buttonClick);
+            audio.currentTime = 0;
+            audio.volume = document.getElementById('sfx-volume').value;
+            audio.play().catch(e => console.log('Звук кнопки не воспроизведён:', e));
+        }
+        
+        // Воспроизведение звука подбора предмета
+        function playItemPickupSound() {
+            if (!gameState.soundEnabled) return;
+            
+            const audio = getAudio(soundEffects.itemPickup);
+            audio.currentTime = 0;
+            audio.volume = document.getElementById('sfx-volume').value;
+            audio.play().catch(e => console.log('Звук предмета не воспроизведён:', e));
+        }
+        
+        // Воспроизведение звука открытия двери
+        function playDoorOpenSound() {
+            if (!gameState.soundEnabled) return;
+            
+            const audio = getAudio(soundEffects.doorOpen);
+            audio.currentTime = 0;
+            audio.volume = document.getElementById('sfx-volume').value;
+            audio.play().catch(e => console.log('Звук двери не воспроизведён:', e));
+        }
+        
+        // Воспроизведение страшного звука
+        function playScarySound() {
+            if (!gameState.soundEnabled) return;
+            
+            const audio = getAudio(soundEffects.scary);
+            audio.currentTime = 0;
+            audio.volume = document.getElementById('sfx-volume').value;
+            audio.play().catch(e => console.log('Страшный звук не воспроизведён:', e));
+        }
+        
+        // Воспроизведение музыки меню
+        function playMainMenuMusic() {
+            if (gameState.isInEnding || gameState.isInVideo) return;
+            
+            const audio = audioElements.mainMenuMusic;
+            audio.src = 'sounds/music_menu.mp3';
+            audio.volume = gameState.musicEnabled ? document.getElementById('music-volume').value : 0;
+            audio.loop = true;
+            audio.play().catch(e => console.log('Музыка меню не воспроизведена:', e));
+        }
+        
+        // Остановка музыки меню
+        function stopMainMenuMusic() {
+            audioElements.mainMenuMusic.pause();
+        }
+        
+        // Воспроизведение музыки окончания
+        function playEndingMusic(type) {
+            // Всегда проигрываем музыку окончания, но регулируем громкость
+            let audio;
+            if (type === 'good') {
+                audio = audioElements.goodEndingMusic;
+                audio.src = 'sounds/music_victory.mp3';
+            } else if (type === 'bad') {
+                audio = audioElements.badEndingMusic;
+                audio.src = 'sounds/music_tragic.mp3';
+            } else {
+                audio = audioElements.endingMusic;
+                audio.src = 'sounds/music_ending.mp3';
+            }
+            
+            audio.volume = gameState.musicEnabled ? document.getElementById('music-volume').value : 0;
+            audio.loop = true;
+            audio.play().catch(e => console.log('Музыка окончания не воспроизведена:', e));
+        }
+        
+        // Остановка музыки окончания
+        function stopEndingMusic() {
+            audioElements.endingMusic.pause();
+            audioElements.badEndingMusic.pause();
+            audioElements.goodEndingMusic.pause();
+        }
+        
+        // Воспроизведение медиа
+        function playMedia(mediaKey) {
+            const media = mediaResources[mediaKey];
+            if (!media) return;
+            
+            const mediaContent = document.getElementById('media-content');
+            
+            // Обновление изображения
+            if (media.image) {
+                mediaContent.src = media.image;
+                mediaContent.classList.remove('hidden');
+            } else {
+                mediaContent.classList.add('hidden');
+            }
+            
+            // Воспроизведение звука локации
+            if (media.audio) {
+                playLocationAudio(mediaKey);
+            }
+        }
+        
+        // Переключение панели настроек
+        function toggleSettings() {
+            playButtonClick();
+            const settingsPanel = document.getElementById('settings-panel');
+            settingsPanel.style.display = settingsPanel.style.display === 'flex' ? 'none' : 'flex';
+        }
+        
+        // Переключение звука
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            gameState.musicEnabled = !gameState.musicEnabled;
+            gameState.videoEnabled = !gameState.videoEnabled;
+            
+            const btn = document.getElementById('toggle-sound-btn');
+            btn.textContent = gameState.soundEnabled ? 'Выключить звук' : 'Включить звук';
+            
+            if (gameState.soundEnabled) {
+                // Если звук включен, возобновляем музыку меню и текущий эмбиент
+                if (!gameState.isInEnding && !gameState.isInVideo) {
+                    playMainMenuMusic();
+                    playLocationAudio(gameState.currentLocation);
+                }
+                
+                // Обновляем громкость музыки окончания, если мы в концовке
+                if (gameState.isInEnding) {
+                    updateEndingMusicVolume();
+                }
+            } else {
+                // Если звук выключен, останавливаем все аудио, кроме музыки окончания
+                audioElements.mainMenuMusic.pause();
+                stopAllLocationAudio();
+                
+                // Обновляем громкость музыки окончания (устанавливаем в 0)
+                if (gameState.isInEnding) {
+                    updateEndingMusicVolume();
+                }
+            }
+            
+            updateVolumeSettings();
+        }
+        
+        // Обновление громкости музыки окончания
+        function updateEndingMusicVolume() {
+            const volume = gameState.musicEnabled ? document.getElementById('music-volume').value : 0;
+            
+            if (audioElements.endingMusic && !audioElements.endingMusic.paused) {
+                audioElements.endingMusic.volume = volume;
+            }
+            if (audioElements.badEndingMusic && !audioElements.badEndingMusic.paused) {
+                audioElements.badEndingMusic.volume = volume;
+            }
+            if (audioElements.goodEndingMusic && !audioElements.goodEndingMusic.paused) {
+                audioElements.goodEndingMusic.volume = volume;
+            }
+        }
+        
+        // Обновление громкости звуков
+        function updateVolumeSettings() {
+            const musicVolume = gameState.musicEnabled ? document.getElementById('music-volume').value : 0;
+            const sfxVolume = gameState.soundEnabled ? document.getElementById('sfx-volume').value : 0;
+            const videoVolume = gameState.videoEnabled ? document.getElementById('video-volume').value : 0;
+            const ambientVolume = gameState.soundEnabled && !gameState.isInEnding && !gameState.isInVideo ? document.getElementById('ambient-volume').value : 0;
+            
+            // Обновление громкости для всех аудио элементов
+            audioElements.mainMenuMusic.volume = gameState.isInEnding || gameState.isInVideo ? 0 : musicVolume;
+            
+            // Обновление громкости для аудио локаций
+            for (const key in audioElements) {
+                if (key !== 'mainMenuMusic' && key !== 'endingMusic' && key !== 'badEndingMusic' && key !== 'goodEndingMusic') {
+                    audioElements[key].volume = ambientVolume;
+                }
+            }
+            
+            // Обновление звуков эффектов
+            const buttonClick = getAudio(soundEffects.buttonClick);
+            const itemPickup = getAudio(soundEffects.itemPickup);
+            const doorOpen = getAudio(soundEffects.doorOpen);
+            const scary = getAudio(soundEffects.scary);
+            
+            buttonClick.volume = sfxVolume;
+            itemPickup.volume = sfxVolume;
+            doorOpen.volume = sfxVolume;
+            scary.volume = sfxVolume;
+            
+            const video = document.getElementById('hallucination-video');
+            video.volume = videoVolume;
+        }
+        
+        // Запуск новой игры
+        function startGame() {
+            // Сброс состояния игры
+            gameState.currentLocation = 'factory_outside';
+            gameState.hasPass = false;
+            gameState.hasScrewdriver = false;
+            gameState.hasKey = false;
+            gameState.hasFlashlight = false;
+            gameState.hasBattery = false,
+            gameState.hasWrench = false,
+            gameState.hasCard = false,
+            gameState.hasDocuments = false,
+            gameState.lookedAtPass = false,
+            gameState.conveyorStopped = false;
+            gameState.isInEnding = false;
+            gameState.isInVideo = false;
+            
+            initGame();
+        }
+        
+        // Показать найденные концовки
+        function showEndings() {
+            gameState.isInEnding = true;
+            document.getElementById('main-menu').style.display = 'none';
+            let endingsText = "Вы ещё не нашли ни одной концовки.";
+            
+            if (gameState.endingsFound.length > 0) {
+                endingsText = "<h3>Найденные концовки:</h3><ul>";
+                gameState.endingsFound.forEach(end => {
+                    endingsText += `<li>${end}</li>`;
+                });
+                endingsText += "</ul>";
+                
+                if (gameState.endingsFound.length >= 3) {
+                    endingsText += "<p>Вы нашли все основные концовки! Теперь доступна секретная концовка.</p>";
+                }
+            }
+            
+            setEndingBackground('Просмотр концовок');
+            document.getElementById('ending-title').textContent = "Просмотр концовок";
+            document.getElementById('ending-text').innerHTML = endingsText;
+            document.getElementById('ending-screen').style.display = 'flex';
+            document.getElementById('restart-btn').textContent = "Вернуться в меню";
+            document.getElementById('restart-btn').onclick = returnToMenu;
+            
+            // Останавливаем все звуки, кроме музыки окончания
+            stopMainMenuMusic();
+            stopAllLocationAudio();
+            playEndingMusic();
+        }
+        
+        // Показать информацию об игре
+        function showAbout() {
+            gameState.isInEnding = true;
+            document.getElementById('main-menu').style.display = 'none';
+            setEndingBackground('Об игре');
+            document.getElementById('ending-title').textContent = "Об игре";
+            document.getElementById('ending-text').innerHTML = `
+                <h3>Хоррор-квест: «Прогресс-07»</h3>
+                <p>СССР, 1980-е годы. Вы оказываетесь перед заброшенным заводом, но что-то не так... Внутри вас ждут ужасы, тайны и несколько возможных концовок.</p>
+                <p>Найдите все концовки, чтобы открыть секретный финал!</p>
+                <p>Автор: [Ваше имя]</p>
+                <p>Версия 1.0</p>
+            `;
+            document.getElementById('ending-screen').style.display = 'flex';
+            document.getElementById('restart-btn').textContent = "Вернуться в меню";
+            document.getElementById('restart-btn').onclick = returnToMenu;
+            
+            // Останавливаем все звуки, кроме музыки окончания
+            stopMainMenuMusic();
+            stopAllLocationAudio();
+            playEndingMusic();
+        }
+        
+        // Установить фон для концовки
+        function setEndingBackground(endingName) {
+            const endingScreen = document.getElementById('ending-screen');
+            endingScreen.style.backgroundImage = `url('${endingImages[endingName]}')`;
+        }
+        
+        // Вернуться в главное меню
+        function returnToMenu() {
+            playButtonClick();
+            gameState.isInEnding = false;
+            gameState.isInVideo = false;
+            document.getElementById('ending-screen').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+            document.getElementById('header').classList.add('hidden');
+            document.getElementById('game-container').classList.add('hidden');
+            stopEndingMusic();
+            stopAllLocationAudio();
+            playMainMenuMusic();
+        }
+        
+        // Обновление отображения локации
+        function updateLocation() {
+            const locationTitle = document.getElementById('location-title');
+            const locationDesc = document.getElementById('location-description');
+            const actionsDiv = document.getElementById('actions');
+            actionsDiv.innerHTML = '';
+            
+            switch(gameState.currentLocation) {
+                case 'factory_outside':
+                    locationTitle.textContent = 'Завод "Прогресс-07"';
+                    locationDesc.innerHTML = 'Вы стоите перед заброшенным заводом, но понимаете, что вокруг — СССР, 1980-е. Массивные ворота с ржавой табличкой "Прогресс-07" скрипят на ветру. Вдалеке слышен гул машин, но вокруг ни души.';
+                    
+                    addActionButton('Подойти к проходной завода', approachFactory);
+                    addActionButton('Осмотреться вокруг', lookAround);
+                    
+                    playMedia('factory_outside');
+                    break;
+                    
+                case 'gate':
+                    locationTitle.textContent = 'Проходная';
+                    locationDesc.innerHTML = 'Вы подходите к проходной завода. Внутри — стеклянные стены, кровью нацарапано <span class="blood-text">«БЕГИ!»</span>. Перед вами турникет, а за перегородкой — пропуск.';
+                    
+                    if (gameState.hasPass) {
+                        locationDesc.innerHTML += '<div class="note">Читаете записку: «Если ты читаешь это — мы уже часть линии. Не смотри на пропуск слишком долго. Беги!!! Любим тебя. Мама и папа.»</div>';
+                        
+                        addActionButton('Рассмотреть пропуск', examinePass);
+                        addActionButton('Пройти через турникет', goThroughTurnstile);
+                    } else {
+                        addActionButton('Достать пропуск (через узкое отверстие в стекле)', takePass);
+                    }
+                    
+                    playMedia('gate');
+                    break;
+                    
+                case 'conveyor':
+                    locationTitle.textContent = 'Конвейер';
+                    locationDesc.innerHTML = 'Грохот машин, запах масла и… мяса. Люди стоят на ленте, превращаясь в роботов. «Сборщики» (существа с проволочными лицами) наблюдают.<br><br><div class="note">Голос из динамиков:<br>«Сынок? Это ты? Они нас переделали… но мы можем быть вместе. Просто встань на ленту…»</div>';
+                    
+                    if (!gameState.conveyorStopped) {
+                        addActionButton('Встать на ленту', stepOnConveyor);
+                        addActionButton('Найти отвёртку в ящике под лентой', () => {
+                            gameState.hasScrewdriver = true;
+                            playItemPickupSound();
+                            updateInventory();
+                            showMessage('Найдена отвёртка', 'Вы нашли отвёртку! Теперь можно попытаться вскрыть панель управления.', updateLocation);
+                        });
+                        if (gameState.hasScrewdriver) {
+                            addActionButton('Вскрыть панель управления отвёрткой', openControlPanel);
+                        }
+                    } else {
+                        addActionButton('Пройти в склад', goToStorage);
+                    }
+                    
+                    playMedia(gameState.conveyorStopped ? 'conveyor_stopped' : 'conveyor');
+                    break;
+                    
+                case 'storage':
+                    locationTitle.textContent = 'Склад';
+                    locationDesc.innerHTML = 'Ящики с маркировкой <span class="blood-text">«Детали 07»</span>, разбитый терминал, мертвый рабочий с гаечным ключом в руке.<br><br><div class="blood-text">На стене кровью:<br>«Они не люди. Они уже починили это до тебя.»</div>';
+                    
+                    addActionButton('Осмотреть ящики', checkBoxes);
+                    addActionButton('Подойти к телу', approachBody);
+                    
+                    if (gameState.hasWrench) {
+                        addActionButton('Идти в архив', goToArchive);
+                    }
+                    
+                    playMedia('storage');
+                    break;
+                    
+                case 'archive':
+                    locationTitle.textContent = 'Архив';
+                    
+                    if (!gameState.hasFlashlight || !gameState.hasBattery) {
+                        locationDesc.innerHTML = 'Темно. Столы с документами, но без света ничего не видно.';
+                        
+                        addActionButton('Осмотреть разбитый шкаф', checkCabinet);
+                        addActionButton('Найти аккумулятор в ящике стола', findBattery);
+                        addActionButton('На ощупь искать выход', findExitInDark);
+                    } else {
+                        locationDesc.innerHTML = 'В свете фонаря видите документы:<br><div class="note">«Испытуемый 07-85. Родители уже обработаны. Ожидает замены биологических компонентов.»</div><br>Освещаете дальше — видите дверь в подвал.';
+                        
+                        addActionButton('Идти в подвал', goToBasement);
+                        addActionButton('Изучить документы', studyDocuments);
+                    }
+                    
+                    playMedia(gameState.hasFlashlight && gameState.hasBattery ? 'archive_light' : 'archive');
+                    break;
+                    
+                case 'basement':
+                    locationTitle.textContent = 'Подвал';
+                    locationDesc.innerHTML = 'Пугающая капсула с надписью <span class="blood-text">SCP-ХХХ-RU</span>. Схема на стене:<br>«Проект "Сборка №7". Замена людей на механизмы.»';
+                    
+                    addActionButton('Осмотреть капсулу', examineCapsule);
+                    
+                    if (!gameState.hasCard) {
+                        addActionButton('Осмотреть тело учёного', examineScientist);
+                        
+                        if (gameState.hasWrench) {
+                            addActionButton('Использовать гаечный ключ, чтобы сломать вентиляционную решётку', breakVent);
+                        }
+                    } else {
+                        addActionButton('Идти в контрольную комнату', goToControlRoom);
+                    }
+                    
+                    playMedia('basement');
+                    break;
+                    
+                case 'control_room':
+                    locationTitle.textContent = 'Контрольная комната';
+                    locationDesc.innerHTML = 'Экраны с надписью:<br><span class="blood-text">«Дефектная деталь. Требуется замена.»</span>';
+                    
+                    addActionButton('Аварийный выход', emergencyExit);
+                    addActionButton('Остановка линии', stopLine);
+                    addActionButton('Изучить терминалы', checkTerminals);
+                    
+                    if (gameState.hasDocuments) {
+                        addActionButton('Отправить сигнал SOS', sendSOS);
+                    }
+                    
+                    playMedia('control_room');
+                    break;
+                    
+                case 'scp_arrival':
+                    locationTitle.textContent = 'SCP-вмешательство';
+                    locationDesc.innerHTML = 'Агенты в чёрном помогают взломать терминал.';
+                    
+                    addActionButton('Уничтожить данные', destroyData);
+                    
+                    // Секретная концовка доступна только если найдены все другие концовки
+                    if (gameState.endingsFound.includes('Механическая линия') && 
+                        gameState.endingsFound.includes('Обнуление') && 
+                        gameState.endingsFound.includes('Освобождение')) {
+                        addActionButton('Сохранить данные (секретный выбор)', saveData);
+                    }
+                    
+                    // Останавливаем все звуки локации перед показом концовки
+                    stopAllLocationAudio();
+                    playMedia('scp_arrival');
+                    break;
+            }
+            
+            updateInventory();
+        }
+        
+        // Добавление кнопки действия
+        function addActionButton(text, onClick) {
+            const btn = document.createElement('button');
+            btn.className = 'action-btn';
+            btn.textContent = text;
+            btn.onclick = function() {
+                playButtonClick();
+                onClick();
+            };
+            document.getElementById('actions').appendChild(btn);
+        }
+        
+        // Обновление инвентаря
+        function updateInventory() {
+            const inventory = document.getElementById('inventory-items');
+            inventory.innerHTML = '';
+            
+            if (gameState.hasPass) addInventoryItem('Пропуск');
+            if (gameState.hasScrewdriver) addInventoryItem('Отвёртка');
+            if (gameState.hasKey) addInventoryItem('Ключ');
+            if (gameState.hasFlashlight) addInventoryItem('Фонарик');
+            if (gameState.hasBattery) addInventoryItem('Аккумулятор');
+            if (gameState.hasWrench) addInventoryItem('Гаечный ключ');
+            if (gameState.hasCard) addInventoryItem('Ключ-карта');
+            if (gameState.hasDocuments) addInventoryItem('Документы SCP');
+        }
+        
+        function addInventoryItem(name) {
+            const item = document.createElement('div');
+            item.className = 'inventory-item';
+            item.textContent = name;
+            document.getElementById('inventory-items').appendChild(item);
+        }
+        
+        // Показать сообщение в правом нижнем углу
+        function showMessage(title, message, callback) {
+            const messageContainer = document.getElementById('message-container');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message';
+            
+            const messageTitle = document.createElement('div');
+            messageTitle.className = 'message-title';
+            messageTitle.textContent = title;
+            
+            const messageText = document.createElement('div');
+            messageText.className = 'message-text';
+            messageText.innerHTML = message;
+            
+            messageElement.appendChild(messageTitle);
+            messageElement.appendChild(messageText);
+            
+            if (callback) {
+                const messageBtn = document.createElement('button');
+                messageBtn.className = 'message-btn';
+                messageBtn.textContent = 'Понятно';
+                messageBtn.onclick = function() {
+                    messageElement.style.opacity = '0';
+                    messageElement.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        messageContainer.removeChild(messageElement);
+                        callback();
+                    }, 300);
+                };
+                messageElement.appendChild(messageBtn);
+            } else {
+                // Автоматическое скрытие через 5 секунд
+                setTimeout(() => {
+                    messageElement.style.opacity = '0';
+                    messageElement.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        messageContainer.removeChild(messageElement);
+                    }, 300);
+                }, 5000);
+            }
+            
+            messageContainer.appendChild(messageElement);
+            
+            // Ограничение количества сообщений
+            if (messageContainer.children.length > 3) {
+                messageContainer.removeChild(messageContainer.children[0]);
+            }
+        }
+        
+        // Показать панель ввода кода
+        function showCodeInputPanel(type, title) {
+            gameState.currentCodeInput = type;
+            const panel = document.querySelector('.code-input-panel');
+            const input = panel.querySelector('.code-input');
+            const titleElement = panel.querySelector('.code-input-title');
+            
+            titleElement.textContent = title;
+            input.value = '';
+            panel.style.display = 'flex';
+            input.focus();
+        }
+        
+        // Скрыть панель ввода кода
+        function hideCodeInputPanel() {
+            document.querySelector('.code-input-panel').style.display = 'none';
+        }
+        
+        // Обработка ввода кода
+        function submitCode() {
+            const input = document.querySelector('.code-input');
+            const code = input.value.trim();
+            hideCodeInputPanel();
+            
+            if (gameState.currentCodeInput === 'terminal') {
+                if (code === '07-86' || code === '0786') {
+                    gameState.hasWrench = true;
+                    playItemPickupSound();
+                    updateInventory();
+                    showMessage('Гаечный ключ', 'Вы вводите код и слышите щелчок. В ящике стола находите гаечный ключ.', updateLocation);
+                } else {
+                    showMessage('Ошибка', 'Неверный код.', updateLocation);
+                }
+            }
+            else if (gameState.currentCodeInput === 'scp-docs') {
+                if (code === '07-86' || code === '0786') {
+                    gameState.hasDocuments = true;
+                    playItemPickupSound();
+                    updateInventory();
+                    showMessage('Документы SCP', 'Вы находите документы SCP и читаете: «Объекты — мёртвы, их сознание — программа.»', updateLocation);
+                } else {
+                    showMessage('Ошибка', 'Неверный код доступа.', updateLocation);
+                }
+            }
+        }
+        
+        // Показать панель с документами
+        function showDocumentPanel() {
+            document.querySelector('.document-panel').style.display = 'flex';
+        }
+        
+        // Скрыть панель с документами
+        function closeDocumentPanel() {
+            document.querySelector('.document-panel').style.display = 'none';
+            updateLocation();
+        }
+        
+        // ===== ДЕЙСТВИЯ ИГРОКА =====
+        function approachFactory() {
+            gameState.currentLocation = 'gate';
+            playDoorOpenSound();
+            updateLocation();
+        }
+        
+        function lookAround() {
+            showMessage(
+                'Осмотр территории', 
+                'Вы осматриваете территорию вокруг завода. Ворота заржавели, но целы. На земле видны следы от шин, но они выглядят свежими, несмотря на заброшенный вид завода. Вдалеке слышен гул машин, но дорога пуста.',
+                updateLocation
+            );
+        }
+        
+        function takePass() {
+            gameState.hasPass = true;
+            playItemPickupSound();
+            showMessage(
+                'Пропуск найден', 
+                'Вы достаёте пропуск через узкое отверстие в стекле. На нём видны следы крови и странные символы.',
+                updateLocation
+            );
+        }
+        
+        function examinePass() {
+            gameState.lookedAtPass = true;
+            gameState.isInVideo = true;
+            
+            // Остановить музыку меню перед воспроизведением видео
+            stopMainMenuMusic();
+            stopAllLocationAudio();
+            
+            // Показываем видео
+            const videoContainer = document.getElementById('video-container');
+            const video = document.getElementById('hallucination-video');
+            const escapeBtn = document.getElementById('escape-btn');
+            
+            videoContainer.style.display = 'flex';
+            video.style.display = 'block';
+            video.currentTime = 0;
+            video.volume = document.getElementById('video-volume').value;
+            video.play().catch(e => console.log('Автовоспроизведение заблокировано:', e));
+            
+            // Показываем кнопку "Беги!" на 26 секунде
+            setTimeout(() => {
+                escapeBtn.style.display = 'block';
+                
+                // Скрываем кнопку через 6 секунд (на 32 секунде)
+                setTimeout(() => {
+                    if (escapeBtn.style.display === 'block') {
+                        escapeBtn.style.display = 'none';
+                    }
+                }, 6000);
+            }, 26000);
+            
+            // Если игрок не нажмет кнопку, через 36 секунд показываем концовку
+            setTimeout(() => {
+                if (videoContainer.style.display === 'flex') {
+                    showHallucinationEnding();
+                }
+            }, 36000);
+        }
+        
+        function escapeHallucination() {
+            gameState.isInVideo = false;
+            // Скрываем видео и кнопку
+            document.getElementById('video-container').style.display = 'none';
+            document.getElementById('hallucination-video').pause();
+            document.getElementById('escape-btn').style.display = 'none';
+            
+            // Возвращаем музыку меню
+            playMainMenuMusic();
+            
+            // Возвращаем игрока в игру
+            showMessage(
+                'Галлюцинации прекратились', 
+                'Вы отводите взгляд от пропуска и галлюцинации прекращаются!',
+                updateLocation
+            );
+        }
+        
+        function showHallucinationEnding() {
+            gameState.isInVideo = false;
+            gameState.isInEnding = true;
+            // Скрываем видео и кнопку
+            document.getElementById('video-container').style.display = 'none';
+            document.getElementById('hallucination-video').pause();
+            document.getElementById('escape-btn').style.display = 'none';
+            
+            // Показываем концовку
+            showEnding(
+                'Обнуление', 
+                'Вы слишком долго смотрели на пропуск. Видите фото отца. Голова кружится, галлюцинации, крики «БЕГИ!» — всё сливается воедино. Вы теряете сознание...<br><br>Просыпаетесь перед проходной завода. Всё начинается сначала.'
+            );
+            if (!gameState.endingsFound.includes('Обнуление')) {
+                gameState.endingsFound.push('Обнуление');
+            }
+        }
+        
+        function goThroughTurnstile() {
+            gameState.currentLocation = 'conveyor';
+            playDoorOpenSound();
+            updateLocation();
+        }
+        
+        function openControlPanel() {
+            gameState.conveyorStopped = true;
+            playScarySound();
+            showMessage(
+                'Панель управления', 
+                'Вы используете отвёртку, чтобы вскрыть панель управления. Внутри вы находите клубок проводов и перерезаете их. Конвейер останавливается с жутким скрежетом.',
+                updateLocation
+            );
+        }
+        
+        function stepOnConveyor() {
+            playScarySound();
+            showEnding(
+                'Механическая линия', 
+                'Вы решаете встать на ленту. Сначала ничего не происходит, но затем чувствуете, как что-то холодное касается вашей шеи...<br><br>Боль. Только боль. Ваше тело меняется, мысли становятся простыми командами. Вы — часть линии теперь. Вы — Прогресс-07.'
+            );
+            if (!gameState.endingsFound.includes('Механическая линия')) {
+                gameState.endingsFound.push('Механическая линия');
+            }
+        }
+        
+        function goToStorage() {
+            gameState.currentLocation = 'storage';
+            playDoorOpenSound();
+            updateLocation();
+        }
+        
+        function checkBoxes() {
+            showMessage(
+                'Осмотр ящиков', 
+                'Вы осматриваете ящики. Большинство из них пусты, но в одном находите старую фотографию рабочих завода. На обороте надпись: "Не верь тому, что видишь. Они уже среди нас."',
+                updateLocation
+            );
+        }
+        
+        function approachBody() {
+            const actionsDiv = document.getElementById('actions');
+            actionsDiv.innerHTML = '';
+            
+            addActionButton('Найти записку в кармане', () => {
+                showMessage(
+                    'Найдена записка', 
+                    'Вы находите записку с кодом: 07-86',
+                    () => {
+                        showCodeInputPanel('terminal', 'Введите код в терминал:');
+                    }
+                );
+            });
+        }
+        
+        function goToArchive() {
+            gameState.currentLocation = 'archive';
+            playDoorOpenSound();
+            updateLocation();
+        }
+        
+        function checkCabinet() {
+            showMessage(
+                'Разбитый шкаф', 
+                'Внутри разбитого шкафа вы находите мёртвого охранника. В его руке фонарик, но батарейка села.',
+                () => {
+                    gameState.hasFlashlight = true;
+                    playItemPickupSound();
+                    updateInventory();
+                    updateLocation();
+                }
+            );
+        }
+        
+        function findBattery() {
+            gameState.hasBattery = true;
+            playItemPickupSound();
+            updateInventory();
+            
+            if (gameState.hasFlashlight) {
+                showMessage('Фонарик работает', 'Вы вставляете аккумулятор во фонарик. Он включается!', () => {
+                    playMedia('archive_light');
+                    updateLocation();
+                });
+            } else {
+                updateLocation();
+            }
+        }
+        
+        function findExitInDark() {
+            playScarySound();
+            showMessage(
+                'Темнота', 
+                'Вы пытаетесь найти выход на ощупь, но в темноте натыкаетесь на что-то мягкое и липкое. Раздаётся жуткий скрежет...',
+                () => {
+                    showEnding(
+                        'Тёмный конец', 
+                        'В темноте вы не заметили сборщика. Острые проволоки пронзают ваше тело, и последнее, что вы слышите — голос матери: "Мы будем вместе, сынок..."'
+                    );
+                    if (!gameState.endingsFound.includes('Тёмный конец')) {
+                        gameState.endingsFound.push('Тёмный конец');
+                    }
+                }
+            );
+        }
+        
+        function studyDocuments() {
+            showDocumentPanel();
+        }
+        
+        function goToBasement() {
+            gameState.currentLocation = 'basement';
+            playDoorOpenSound();
+            updateLocation();
+        }
+        
+        function examineCapsule() {
+            showMessage(
+                'Капсула SCP', 
+                'Капсула покрыта странными символами. Внутри видны следы борьбы. На панели управления мигает красный индикатор с надписью "Ошибка активации".',
+                updateLocation
+            );
+        }
+        
+        function examineScientist() {
+            showMessage(
+                'Тело учёного', 
+                'В руке учёного ключ-карта, но она залита кровью и приклеилась. Нужно найти другой способ.',
+                updateLocation
+            );
+        }
+        
+        function breakVent() {
+            showMessage(
+                'Вентиляционная решётка', 
+                'Вы используете гаечный ключ, чтобы сломать вентиляционную решётку. Внутри находите ключ-карта в тайнике.',
+                () => {
+                    gameState.hasCard = true;
+                    playItemPickupSound();
+                    updateInventory();
+                    updateLocation();
+                }
+            );
+        }
+        
+        function goToControlRoom() {
+            gameState.currentLocation = 'control_room';
+            playDoorOpenSound();
+            updateLocation();
+        }
+        
+        function checkTerminals() {
+            showMessage(
+                'Терминалы управления', 
+                'На терминалах вы видите списки работников завода с пометками: "Обработан", "Отказ", "Готов к замене". Ваше имя тоже есть в списке с пометкой "Дефект".',
+                updateLocation
+            );
+        }
+        
+        function emergencyExit() {
+            playScarySound();
+            showEnding(
+                'Обнуление', 
+                'Вы нажимаете кнопку аварийного выхода. Раздаётся сирена, и всё вокруг начинает распадаться...<br><br>Вы оказываетесь перед проходной завода. Всё начинается сначала.'
+            );
+            if (!gameState.endingsFound.includes('Обнуление')) {
+                gameState.endingsFound.push('Обнуление');
+            }
+        }
+        
+        function stopLine() {
+            const actionsDiv = document.getElementById('actions');
+            actionsDiv.innerHTML = '';
+            
+            addActionButton('Найти документы SCP (в сейфе, код — 07-86)', () => {
+                showCodeInputPanel('scp-docs', 'Введите код доступа к документам SCP:');
+            });
+            
+            addActionButton('Отключить питание', () => {
+                playScarySound();
+                showEnding(
+                    'Отключение', 
+                    'Вы отключаете питание завода. В темноте слышите, как механизмы останавливаются. Но затем раздаются шаги... Много шагов. Они идут за вами.'
+                );
+                if (!gameState.endingsFound.includes('Отключение')) {
+                    gameState.endingsFound.push('Отключение');
+                }
+            });
+        }
+        
+        function sendSOS() {
+            gameState.currentLocation = 'scp_arrival';
+            updateLocation();
+        }
+        
+        function destroyData() {
+            playEndingMusic('good');
+            showEnding(
+                'Освобождение', 
+                'Вы уничтожаете данные. Все «роботы» вокруг падают, из них выходят странные светящиеся сущности.<br><br>Вы слышите голос родителей: «Спасибо…»<br><br>Вспышка света — и вы возвращаетесь в своё время. Но в кармане находите ржавый гаечный ключ с гравировкой «07-85».'
+            );
+            if (!gameState.endingsFound.includes('Освобождение')) {
+                gameState.endingsFound.push('Освобождение');
+            }
+        }
+        
+        function saveData() {
+            playEndingMusic('good');
+            showEnding(
+                'Секретная концовка', 
+                'Вы решаете сохранить данные. Агенты SCP забирают вас вместе с информацией.<br><br>«Прогресс-07» — это не просто завод. Это машина, стирающая людей. И вы были частью системы с самого начала.<br><br>Теперь вы — SCP-XXXX.'
+            );
+        }
+        
+        // Показать концовку
+        function showEnding(title, text) {
+            gameState.isInEnding = true;
+            setEndingBackground(title);
+            document.getElementById('ending-title').textContent = title;
+            document.getElementById('ending-text').innerHTML = text;
+            document.getElementById('ending-screen').style.display = 'flex';
+            document.getElementById('restart-btn').textContent = "Вернуться в меню";
+            document.getElementById('restart-btn').onclick = returnToMenu;
+            
+            // Останавливаем все звуки, кроме музыки окончания
+            stopMainMenuMusic();
+            stopAllLocationAudio();
+            
+            if (title !== 'Просмотр концовок' && title !== 'Об игре') {
+                // Определяем тип концовки для выбора музыки
+                if (title === 'Освобождение' || title === 'Секретная концовка') {
+                    playEndingMusic('good');
+                } else {
+                    playEndingMusic('bad');
+                }
+            }
+        }
+        
+        // Перезапуск игры
+        function restartGame() {
+            // Сброс состояния игры (кроме найденных концовок)
+            gameState.currentLocation = 'factory_outside';
+            gameState.hasPass = false;
+            gameState.hasScrewdriver = false;
+            gameState.hasKey = false;
+            gameState.hasFlashlight = false;
+            gameState.hasBattery = false,
+            gameState.hasWrench = false,
+            gameState.hasCard = false,
+            gameState.hasDocuments = false,
+            gameState.lookedAtPass = false,
+            gameState.conveyorStopped = false;
+            gameState.isInEnding = false;
+            gameState.isInVideo = false;
+            
+            initGame();
+        }
+        
+        // Запуск игры при загрузке страницы
+        window.onload = function() {
+            document.getElementById('main-menu').style.display = 'flex';
+            
+            // Настройка слайдеров громкости
+            document.getElementById('music-volume').addEventListener('input', updateVolumeSettings);
+            document.getElementById('sfx-volume').addEventListener('input', updateVolumeSettings);
+            document.getElementById('video-volume').addEventListener('input', updateVolumeSettings);
+            document.getElementById('ambient-volume').addEventListener('input', updateVolumeSettings);
+            
+            // Обработка ввода кода
+            document.querySelector('.code-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitCode();
+                }
+            });
+            
+            // Установка начального состояния звука (выключен)
+            updateVolumeSettings();
+            
+            // Инициализация аудио кэша
+            initAudioCache();
+            
+            // Включить музыку меню через 2 секунды
+            setTimeout(() => {
+                if (document.getElementById('main-menu').style.display === 'flex') {
+                    playMainMenuMusic();
+                }
+            }, 2000);
+        };
+    </script>
+</body>
+</html>
