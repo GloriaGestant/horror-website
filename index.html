@@ -76,6 +76,29 @@
             position: relative;
         }
         
+        /* Мобильный заголовок */
+        .mobile-title {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            color: var(--blood-red);
+            text-shadow: 0 0 10px var(--light-red), 0 0 20px rgba(255, 0, 0, 0.5);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: pulse 2s infinite, flicker 3s infinite;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .mobile-title .line1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .mobile-title .line2 {
+            font-size: 2.5rem;
+        }
+        
         @keyframes pulse {
             0% { text-shadow: 0 0 10px var(--light-red); }
             50% { text-shadow: 0 0 20px var(--light-red), 0 0 30px #800; }
@@ -791,8 +814,11 @@
         
         @media (max-width: 768px) {
             #main-menu h1 {
-                font-size: 2.5rem;
-                letter-spacing: 3px;
+                display: none;
+            }
+            
+            .mobile-title {
+                display: flex;
             }
             
             .menu-btn {
@@ -819,12 +845,58 @@
                 bottom: 70px;
                 right: 15px;
             }
+            
+            /* Видео для мобильных */
+            #hallucination-video {
+                object-fit: contain;
+            }
+            
+            /* Инвентарь для мобильных */
+            #inventory-items {
+                justify-content: center;
+            }
+            
+            .inventory-item {
+                font-size: 0.8rem;
+                padding: 5px 10px;
+            }
+            
+            /* Кнопки действий для мобильных */
+            .action-btn {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            
+            /* Локация и описание для мобильных */
+            #location-title {
+                font-size: 1.3rem;
+            }
+            
+            #location-description {
+                font-size: 0.9rem;
+                line-height: 1.5;
+            }
+            
+            /* Настройки для мобильных */
+            #settings-panel {
+                width: 90%;
+                left: 5%;
+                right: auto;
+                top: 60px;
+            }
+            
+            .settings-slider {
+                width: 80px;
+            }
         }
         
         @media (max-width: 480px) {
-            #main-menu h1 {
-                font-size: 2rem;
-                letter-spacing: 2px;
+            .mobile-title .line1 {
+                font-size: 1.8rem;
+            }
+            
+            .mobile-title .line2 {
+                font-size: 2.2rem;
             }
             
             .menu-btn {
@@ -834,17 +906,20 @@
             }
             
             #location-title {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
             }
             
             #location-description, .action-btn {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
             }
             
-            #settings-panel {
-                width: 90%;
-                left: 5%;
-                right: auto;
+            #inventory-container {
+                padding: 10px;
+            }
+            
+            #inventory-title {
+                font-size: 1rem;
+                text-align: center;
             }
             
             #message-container {
@@ -863,6 +938,34 @@
             
             .message-text {
                 font-size: 0.85rem;
+            }
+            
+            /* Панель ввода кода для мобильных */
+            .code-input-panel {
+                width: 90%;
+                padding: 15px;
+            }
+            
+            /* Панель документов для мобильных */
+            .document-panel {
+                width: 95%;
+                max-width: 95%;
+                padding: 15px;
+            }
+            
+            .document-title {
+                font-size: 1.1rem;
+            }
+            
+            .document-content {
+                font-size: 0.85rem;
+            }
+            
+            /* Кнопка побега для мобильных */
+            #escape-btn {
+                padding: 12px 30px;
+                font-size: 1rem;
+                bottom: 40px;
             }
         }
     </style>
@@ -951,6 +1054,10 @@
     <audio id="scp-arrival-audio" loop></audio>
     
     <div id="main-menu">
+        <div class="mobile-title">
+            <div class="line1">Хоррор-квест</div>
+            <div class="line2">«Прогресс-07»</div>
+        </div>
         <h1 class="typewriter">Хоррор-квест: «Прогресс-07»</h1>
         <button class="menu-btn" onclick="playButtonClick(); startGame()">Начать игру</button>
         <button class="menu-btn" onclick="playButtonClick(); showEndings()">Просмотр концовок</button>
